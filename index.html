@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Meu Controle Financeiro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+  :root {
+    --bg:#F7F5F0;--surface:#FFFFFF;--surface2:#F0EDE6;
+    --border:rgba(0,0,0,0.08);--border-strong:rgba(0,0,0,0.15);
+    --text:#1A1916;--text2:#6B6860;--text3:#A09D98;
+    --green:#1A7A58;--green-bg:#E8F5EF;
+    --red:#B83232;--red-bg:#FBEBEB;
+    --amber:#8A5C0A;--amber-bg:#FDF3E3;
+    --blue:#1A4D8A;--blue-bg:#EAF0FB;
+    --purple:#5A3A8A;--purple-bg:#F0EBF9;
+    --radius:12px;--radius-sm:8px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:1.1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+  header h1{font-size:15px;font-weight:600;letter-spacing:-0.02em}
+  header span{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
+  .nav{display:flex;gap:4px;padding:1.5rem 2rem 0;max-width:1000px;margin:0 auto;flex-wrap:wrap}
+  .nav-btn{padding:8px 15px;font-size:13px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;border:1px solid transparent;border-bottom:none;background:transparent;color:var(--text2);border-radius:var(--radius-sm) var(--radius-sm) 0 0;transition:all .15s}
+  .nav-btn.active{background:var(--surface);color:var(--text);border-color:var(--border);border-bottom-color:var(--surface);margin-bottom:-1px;z-index:1}
+  .nav-btn:hover:not(.active){background:var(--surface2);color:var(--text)}
+  .main{max-width:1000px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 var(--radius) var(--radius) var(--radius);padding:2rem;min-height:60vh}
+  .page{display:none}.page.active{display:block}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px;margin-bottom:2rem}
+  .card{border-radius:var(--radius);padding:16px 18px;border:1px solid var(--border)}
+  .card .card-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+  .card .card-val{font-size:24px;font-weight:600;letter-spacing:-0.03em;font-family:'DM Mono',monospace}
+  .card.green{background:var(--green-bg);border-color:rgba(26,122,88,.15)}.card.green .card-label,.card.green .card-val{color:var(--green)}
+  .card.red{background:var(--red-bg);border-color:rgba(184,50,50,.15)}.card.red .card-label,.card.red .card-val{color:var(--red)}
+  .card.blue{background:var(--blue-bg);border-color:rgba(26,77,138,.15)}.card.blue .card-label,.card.blue .card-val{color:var(--blue)}
+  .card.amber{background:var(--amber-bg);border-color:rgba(138,92,10,.15)}.card.amber .card-label,.card.amber .card-val{color:var(--amber)}
+  .alert{padding:13px 16px;border-radius:var(--radius-sm);font-size:13px;line-height:1.6;margin-bottom:1.25rem;border-left:3px solid}
+  .alert.warn{background:var(--amber-bg);border-color:var(--amber);color:#5c3b00}
+  .alert.info{background:var(--blue-bg);border-color:var(--blue);color:#0f2d5a}
+  .alert.danger{background:var(--red-bg);border-color:var(--red);color:#6b1a1a}
+  .alert.success{background:var(--green-bg);border-color:var(--green);color:#0e4530}
+  .alert strong{font-weight:600;display:block;margin-bottom:3px}
+  .sec-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin:2rem 0 1rem}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+  @media(max-width:640px){.form-grid{grid-template-columns:1fr}}
+  .form-box{border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem}
+  .form-box-title{font-size:13px;font-weight:600;margin-bottom:1rem}
+  .form-box-title.e{color:var(--green)}.form-box-title.s{color:var(--red)}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:4px}
+  .field input,.field select{width:100%;padding:9px 11px;font-size:13px;font-family:'DM Sans',sans-serif;border:1px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;transition:border-color .15s}
+  .field input:focus,.field select:focus{border-color:#999}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .btn{width:100%;padding:10px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;border:1.5px solid;margin-top:6px}
+  .btn.entrada{background:var(--green-bg);color:var(--green);border-color:rgba(26,122,88,.3)}.btn.entrada:hover{background:#c8e9d8}
+  .btn.saida{background:var(--red-bg);color:var(--red);border-color:rgba(184,50,50,.3)}.btn.saida:hover{background:#f5d5d5}
+  .filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+  .filt{padding:5px 14px;font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;border:1px solid var(--border-strong);border-radius:100px;background:none;color:var(--text2);cursor:pointer;transition:all .15s}
+  .filt.active,.filt:hover{background:var(--text);color:#fff;border-color:var(--text)}
+  .table-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:9px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);border-bottom:1px solid var(--border)}
+  td{padding:10px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--bg)}
+  .tag{display:inline-block;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600;white-space:nowrap}
+  .tag.entrada{background:var(--green-bg);color:var(--green)}
+  .tag.saida{background:var(--amber-bg);color:var(--amber)}
+  .tag.fabrica{background:var(--red-bg);color:var(--red)}
+  .tag.esposo{background:var(--purple-bg);color:var(--purple)}
+  .tag.pendente{background:#f0f0f0;color:#888}
+  .del-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;padding:2px 6px;border-radius:4px;transition:all .1s}
+  .del-btn:hover{background:var(--red-bg);color:var(--red)}
+  .empty{text-align:center;color:var(--text3);font-size:13px;padding:2.5rem 0}
+  .breakdown-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+  .breakdown-item:last-child{border-bottom:none}
+  .breakdown-label{color:var(--text2);min-width:160px}
+  .bar-track{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:3px;transition:width .5s ease}
+  .breakdown-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;min-width:110px;text-align:right}
+  .analise-destaque{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.5rem;margin-bottom:1.5rem}
+  .analise-linha{display:flex;justify-content:space-between;align-items:center;padding:8px 0;font-size:14px;border-bottom:1px solid var(--border)}
+  .analise-linha:last-child{border-bottom:none}
+  .analise-linha.total{font-weight:700;font-size:16px}
+  .positivo{color:var(--green)}.negativo{color:var(--red)}.mono{font-family:'DM Mono',monospace}
+  .export-btn{padding:9px 20px;font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border-strong);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);cursor:pointer;transition:all .15s}
+  .export-btn:hover{background:var(--bg)}
+
+  /* PDF */
+  .pdf-drop-area{border:2px dashed var(--border-strong);border-radius:var(--radius);padding:2.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);margin-bottom:1.5rem}
+  .pdf-drop-area:hover,.pdf-drop-area.drag-over{border-color:var(--blue);background:var(--blue-bg)}
+  .pdf-drop-area .drop-icon{font-size:36px;margin-bottom:10px}
+  .pdf-drop-area p{font-size:14px;font-weight:500;color:var(--text2);margin-bottom:4px}
+  .pdf-drop-area small{font-size:12px;color:var(--text3)}
+  .pdf-loading{text-align:center;padding:2rem;color:var(--text2);font-size:14px}
+  #revisao-container{display:none}
+  .revisao-header{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;margin-bottom:1.25rem;gap:12px}
+  .rev-progress-text{font-size:13px;color:var(--text2);white-space:nowrap}
+  .rev-progress-text strong{color:var(--text)}
+  .progress-bar-wrap{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden}
+  .progress-bar{height:100%;background:var(--blue);border-radius:3px;transition:width .3s}
+  .transacao-card{border:1px solid var(--border);border-radius:var(--radius);padding:1.2rem 1.4rem;margin-bottom:10px;transition:opacity .3s}
+  .transacao-card.feita{opacity:.4}
+  .transacao-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;gap:12px}
+  .transacao-desc{font-size:14px;font-weight:500;flex:1}
+  .transacao-meta{font-size:12px;color:var(--text3);margin-top:3px}
+  .transacao-valor{font-family:'DM Mono',monospace;font-size:18px;font-weight:600;white-space:nowrap}
+  .cat-btns{display:flex;flex-wrap:wrap;gap:6px}
+  .cat-btn{padding:6px 12px;font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;border:1.5px solid var(--border-strong);border-radius:100px;background:var(--surface);color:var(--text2);cursor:pointer;transition:all .12s}
+  .cat-btn:hover{border-color:var(--text);color:var(--text)}
+  .cat-btn.ativo-salario{background:var(--green-bg);color:var(--green);border-color:var(--green)}
+  .cat-btn.ativo-esposo-e{background:#F0EBF9;color:var(--purple);border-color:var(--purple)}
+  .cat-btn.ativo-reembolso{background:var(--blue-bg);color:var(--blue);border-color:var(--blue)}
+  .cat-btn.ativo-outro-e{background:var(--surface2);color:var(--text);border-color:var(--text)}
+  .cat-btn.ativo-escola{background:var(--amber-bg);color:var(--amber);border-color:var(--amber)}
+  .cat-btn.ativo-conta{background:var(--amber-bg);color:var(--amber);border-color:var(--amber)}
+  .cat-btn.ativo-alimentacao{background:var(--blue-bg);color:var(--blue);border-color:var(--blue)}
+  .cat-btn.ativo-saude{background:var(--blue-bg);color:var(--blue);border-color:var(--blue)}
+  .cat-btn.ativo-fabrica{background:var(--red-bg);color:var(--red);border-color:var(--red)}
+  .cat-btn.ativo-esposo-s{background:#F0EBF9;color:var(--purple);border-color:var(--purple)}
+  .cat-btn.ativo-pessoal{background:var(--surface2);color:var(--text);border-color:var(--text)}
+  .cat-btn.ativo-ignorar{background:#f0f0f0;color:#888;border-color:#ccc}
+  .btn-finalizar{width:100%;padding:12px;font-size:14px;font-weight:600;font-family:'DM Sans',sans-serif;border-radius:var(--radius-sm);cursor:pointer;border:none;background:var(--green);color:#fff;margin-top:1rem;transition:all .15s}
+  .btn-finalizar:hover{background:#0f5c40}
+  .btn-finalizar:disabled{background:var(--border-strong);cursor:not-allowed}
+  footer{max-width:1000px;margin:1rem auto 2rem;text-align:center;font-size:11px;color:var(--text3)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💰 Meu Controle Financeiro</h1>
+  <span id="header-data"></span>
+</header>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="goTab('resumo',this)">Resumo</button>
+  <button class="nav-btn" onclick="goTab('importar',this)">📄 Importar PDF</button>
+  <button class="nav-btn" onclick="goTab('manual',this)">Lançamento manual</button>
+  <button class="nav-btn" onclick="goTab('analise',this)">Análise salarial</button>
+  <button class="nav-btn" onclick="goTab('exportar',this)">Exportar</button>
+</div>
+
+<div class="main">
+
+  <!-- RESUMO -->
+  <div id="pg-resumo" class="page active">
+    <div class="cards">
+      <div class="card green"><div class="card-label">Total entradas</div><div class="card-val" id="r-entradas">R$ 0,00</div></div>
+      <div class="card red"><div class="card-label">Total saídas</div><div class="card-val" id="r-saidas">R$ 0,00</div></div>
+      <div class="card blue"><div class="card-label">Salário real estimado</div><div class="card-val" id="r-salario">R$ 0,00</div></div>
+      <div class="card amber"><div class="card-label">Saldo do período</div><div class="card-val" id="r-saldo">R$ 0,00</div></div>
+    </div>
+    <div id="al-pend" class="alert warn" style="display:none"><strong>⏳ Lançamentos pendentes</strong><span id="al-pend-txt"></span></div>
+    <div id="al-fab" class="alert danger" style="display:none"><strong>⚠️ Fábrica no seu cartão</strong><span id="al-fab-txt"></span></div>
+    <div id="al-contas" class="alert warn" style="display:none"><strong>📋 Contas pessoais registradas</strong><span id="al-contas-txt"></span></div>
+    <div class="sec-title">Entradas por origem</div>
+    <div id="bd-entradas"><div class="empty">Sem entradas ainda</div></div>
+    <div class="sec-title">Saídas por categoria</div>
+    <div id="bd-saidas"><div class="empty">Sem saídas ainda</div></div>
+  </div>
+
+  <!-- IMPORTAR PDF -->
+  <div id="pg-importar" class="page">
+    <div class="alert info">
+      <strong>📄 Como exportar o extrato do Itaú em PDF</strong>
+      No app: Extrato → selecione o mês → ícone de compartilhar (canto superior) → "Salvar em PDF" ou "Exportar PDF".
+      Depois selecione o arquivo aqui embaixo. O sistema lê as transações e você categoriza cada uma com um clique.
+      <br><br><strong>O PDF é lido direto no seu dispositivo. Nada sai daqui.</strong>
+    </div>
+
+    <div class="pdf-drop-area" id="drop-area" onclick="document.getElementById('pdf-input').click()">
+      <div class="drop-icon">📑</div>
+      <p>Clique para selecionar o PDF do extrato</p>
+      <small>Ou arraste o arquivo aqui · Apenas arquivos .pdf</small>
+    </div>
+    <input type="file" id="pdf-input" accept=".pdf" style="display:none" onchange="carregarPDF(this)">
+
+    <div id="pdf-loading" class="pdf-loading" style="display:none">⏳ Lendo o PDF, aguarde um momento...</div>
+
+    <div id="revisao-container">
+      <div class="revisao-header">
+        <span class="rev-progress-text">Categorize cada transação: <strong id="rev-feitas">0</strong> de <strong id="rev-total">0</strong></span>
+        <div class="progress-bar-wrap"><div class="progress-bar" id="rev-bar" style="width:0%"></div></div>
+        <button class="export-btn" style="white-space:nowrap" onclick="cancelarRevisao()">Cancelar</button>
+      </div>
+      <div id="rev-lista"></div>
+      <button class="btn-finalizar" id="btn-finalizar" onclick="finalizarRevisao()" disabled>✓ Importar lançamentos categorizados</button>
+    </div>
+  </div>
+
+  <!-- MANUAL -->
+  <div id="pg-manual" class="page">
+    <div class="form-grid">
+      <div class="form-box">
+        <div class="form-box-title e">➕ Nova entrada</div>
+        <div class="row2">
+          <div class="field"><label>Data</label><input type="date" id="e-data"></div>
+          <div class="field"><label>Valor (R$)</label><input type="number" id="e-valor" placeholder="0,00" step="0.01" min="0"></div>
+        </div>
+        <div class="field"><label>Descrição</label><input type="text" id="e-desc" placeholder="Ex: pagamento da empresa"></div>
+        <div class="field"><label>Origem</label>
+          <select id="e-origem">
+            <option value="salario">Salário / pró-labore</option>
+            <option value="esposo">Depósito do esposo</option>
+            <option value="reembolso">Reembolso da fábrica</option>
+            <option value="bonus">Bônus / comissão</option>
+            <option value="outro">Outro</option>
+          </select>
+        </div>
+        <button class="btn entrada" onclick="addManual('entrada')">+ Adicionar entrada</button>
+      </div>
+      <div class="form-box">
+        <div class="form-box-title s">➖ Nova saída</div>
+        <div class="row2">
+          <div class="field"><label>Data</label><input type="date" id="s-data"></div>
+          <div class="field"><label>Valor (R$)</label><input type="number" id="s-valor" placeholder="0,00" step="0.01" min="0"></div>
+        </div>
+        <div class="field"><label>Descrição</label><input type="text" id="s-desc" placeholder="Ex: fatura cartão fábrica"></div>
+        <div class="field"><label>Categoria</label>
+          <select id="s-cat">
+            <option value="escola">Escola / mensalidade</option>
+            <option value="conta">Água / luz / condomínio</option>
+            <option value="alimentacao">Alimentação / mercado</option>
+            <option value="saude">Saúde / farmácia</option>
+            <option value="fabrica">🔴 Fábrica no meu cartão</option>
+            <option value="esposo">A pagar pelo esposo</option>
+            <option value="pessoal">Outros pessoal / família</option>
+          </select>
+        </div>
+        <button class="btn saida" onclick="addManual('saida')">− Adicionar saída</button>
+      </div>
+    </div>
+
+    <div class="sec-title">Todos os lançamentos</div>
+    <div class="filter-row">
+      <button class="filt active" onclick="setFiltro('todos',this)">Todos</button>
+      <button class="filt" onclick="setFiltro('entrada',this)">Entradas</button>
+      <button class="filt" onclick="setFiltro('saida',this)">Saídas pessoais</button>
+      <button class="filt" onclick="setFiltro('fabrica',this)">Fábrica no cartão</button>
+      <button class="filt" onclick="setFiltro('esposo',this)">Esposo</button>
+      <button class="filt" onclick="setFiltro('pendente',this)">⏳ Pendentes</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th style="text-align:right">Valor</th><th></th></tr></thead>
+        <tbody id="tb-items"><tr><td colspan="5" class="empty">Nenhum lançamento ainda</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ANÁLISE -->
+  <div id="pg-analise" class="page">
+    <div class="alert info">
+      <strong>📊 Como o salário real é calculado</strong>
+      Entradas como "salário / pró-labore" = o que a empresa declara pagar. Saídas marcadas como "fábrica no meu cartão" = dinheiro seu que a fábrica usou sem autorização.
+      <br><strong>Salário real = salário declarado − despesas da fábrica no seu cartão</strong>
+    </div>
+    <div class="cards" style="grid-template-columns:repeat(3,1fr)">
+      <div class="card green"><div class="card-label">Salário declarado</div><div class="card-val" id="a-sal">R$ 0,00</div></div>
+      <div class="card red"><div class="card-label">Fábrica no seu cartão</div><div class="card-val" id="a-fab">R$ 0,00</div></div>
+      <div class="card blue"><div class="card-label">Salário líquido real</div><div class="card-val" id="a-liq">R$ 0,00</div></div>
+    </div>
+    <div class="analise-destaque">
+      <div class="analise-linha"><span>Entradas como salário / pró-labore</span><span class="positivo mono" id="al-sal">+ R$ 0,00</span></div>
+      <div class="analise-linha"><span>Depósitos do esposo na sua conta</span><span class="positivo mono" id="al-esp">+ R$ 0,00</span></div>
+      <div class="analise-linha"><span>Despesas da fábrica no seu cartão</span><span class="negativo mono" id="al-fab2">− R$ 0,00</span></div>
+      <div class="analise-linha total"><span>O que realmente é seu</span><span id="al-tot" class="mono">R$ 0,00</span></div>
+    </div>
+    <div class="sec-title">Contas pessoais (escola, água, luz)</div>
+    <div id="lista-cp"><div class="empty">Nenhuma conta pessoal lançada</div></div>
+    <div class="sec-title">Depósitos do esposo</div>
+    <div id="lista-esp"><div class="empty">Nenhum depósito do esposo</div></div>
+    <div class="sec-title">Despesas da fábrica no seu cartão</div>
+    <div id="lista-fab"><div class="empty">Nenhuma despesa da fábrica registrada</div></div>
+  </div>
+
+  <!-- EXPORTAR -->
+  <div id="pg-exportar" class="page">
+    <div class="alert info"><strong>💾 Seus dados ficam só no seu navegador</strong>Nada é enviado a servidores. Faça backup regularmente para não perder os dados.</div>
+    <div class="sec-title">Backup e exportação</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:2rem">
+      <button class="export-btn" onclick="exportarJSON()">📥 Backup (.json)</button>
+      <button class="export-btn" onclick="exportarCSV()">📊 Exportar CSV (Excel)</button>
+      <button class="export-btn" onclick="document.getElementById('imp-file').click()">📤 Importar backup</button>
+      <input type="file" id="imp-file" accept=".json" style="display:none" onchange="importarJSON(this)">
+    </div>
+    <div class="sec-title">Estatísticas</div>
+    <div id="stats"></div>
+    <div class="sec-title" style="margin-top:2rem">Apagar dados</div>
+    <button class="export-btn" style="border-color:var(--red);color:var(--red)" onclick="limparTudo()">🗑️ Apagar tudo</button>
+  </div>
+</div>
+
+<footer>Dados salvos apenas no seu navegador · Nenhuma informação enviada para servidores</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+if(typeof pdfjsLib!=='undefined')pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let items=JSON.parse(localStorage.getItem('fin_v2')||'[]');
+let filtroAtivo='todos';
+let revisao=[];
+
+function salvar(){localStorage.setItem('fin_v2',JSON.stringify(items))}
+function fmt(v){return'R$ '+Math.abs(parseFloat(v)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function fmtD(d){if(!d)return'—';const[y,m,day]=d.split('-');return`${day}/${m}/${y}`}
+
+const hoje=new Date().toISOString().split('T')[0];
+document.getElementById('e-data').value=hoje;
+document.getElementById('s-data').value=hoje;
+document.getElementById('header-data').textContent=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+function goTab(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('pg-'+id).classList.add('active');
+  btn.classList.add('active');
+  render();
+}
+
+// drag & drop
+const dropArea=document.getElementById('drop-area');
+dropArea.addEventListener('dragover',e=>{e.preventDefault();dropArea.classList.add('drag-over')});
+dropArea.addEventListener('dragleave',()=>dropArea.classList.remove('drag-over'));
+dropArea.addEventListener('drop',e=>{
+  e.preventDefault();dropArea.classList.remove('drag-over');
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type==='application/pdf')processarPDF(f);
+  else alert('Selecione um arquivo PDF.');
+});
+
+function carregarPDF(input){
+  const f=input.files[0];
+  if(f)processarPDF(f);
+  input.value='';
+}
+
+async function processarPDF(file){
+  if(typeof pdfjsLib==='undefined'){alert('Erro ao carregar leitor de PDF. Verifique sua conexão.');return}
+  document.getElementById('pdf-loading').style.display='block';
+  document.getElementById('revisao-container').style.display='none';
+  try{
+    const buf=await file.arrayBuffer();
+    const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+    let texto='';
+    for(let p=1;p<=pdf.numPages;p++){
+      const pg=await pdf.getPage(p);
+      const ct=await pg.getTextContent();
+      texto+=ct.items.map(i=>i.str).join(' ')+'\n';
+    }
+    const trans=extrairItau(texto);
+    if(!trans.length){
+      alert('Não foi possível identificar transações neste PDF.\n\nVerifique se é um extrato do Itaú. Tente também o lançamento manual.');
+      document.getElementById('pdf-loading').style.display='none';
+      return;
+    }
+    iniciarRevisao(trans);
+  }catch(e){
+    console.error(e);
+    alert('Erro ao ler o PDF. Tente outro arquivo ou use o lançamento manual.');
+  }
+  document.getElementById('pdf-loading').style.display='none';
+}
+
+function extrairItau(texto){
+  const trans=[];
+  const anoAtual=new Date().getFullYear();
+  const linhas=texto.split(/\n|\r/).map(l=>l.trim()).filter(Boolean);
+  const ignorar=['saldo','total','data','lançamento','histórico','valor','página','extrato','agência','conta','cliente','periodo','período','itaú'];
+
+  // padrão principal: DD/MM ou DD/MM/AA ou DD/MM/AAAA + desc + valor
+  const re=/(\d{2})\/(\d{2})(?:\/(\d{2,4}))?\s+(.+?)\s+([-−]?\d{1,3}(?:\.\d{3})*,\d{2})/;
+
+  linhas.forEach(linha=>{
+    const m=linha.match(re);
+    if(!m)return;
+    let[,dia,mes,anoRaw,desc,valorRaw]=m;
+    desc=desc.trim();
+    if(desc.length<3)return;
+    if(ignorar.some(p=>desc.toLowerCase().includes(p)))return;
+
+    let ano=anoRaw||anoAtual;
+    if(String(ano).length===2)ano='20'+ano;
+    const dataISO=`${ano}-${mes.padStart(2,'0')}-${dia.padStart(2,'0')}`;
+
+    let valorStr=valorRaw.replace(/\s/g,'').replace('−','-').replace(/\./g,'').replace(',','.');
+    const valor=parseFloat(valorStr);
+    if(isNaN(valor)||valor===0)return;
+
+    // evitar duplicatas dentro da mesma leitura
+    if(trans.find(t=>t.data===dataISO&&t.desc===desc&&Math.abs(t.valor)===Math.abs(valor)))return;
+
+    trans.push({id:Date.now()+Math.random(),data:dataISO,desc,valor:Math.abs(valor),tipo:valor>0?'entrada':'saida',cat:null});
+  });
+
+  // fallback mais simples se não encontrou nada
+  if(!trans.length){
+    const re2=/(\d{2})\/(\d{2})\s+(.{4,50}?)\s+(\d[\d.]*,\d{2})/g;
+    let m;
+    while((m=re2.exec(texto))!==null){
+      const[,dia,mes,desc,valorRaw]=m;
+      if(!desc.trim()||desc.length<3)continue;
+      if(ignorar.some(p=>desc.toLowerCase().includes(p)))continue;
+      const valorStr=valorRaw.replace(/\./g,'').replace(',','.');
+      const valor=parseFloat(valorStr);
+      if(isNaN(valor)||valor===0)continue;
+      const dataISO=`${anoAtual}-${mes}-${dia}`;
+      trans.push({id:Date.now()+Math.random(),data:dataISO,desc:desc.trim(),valor:Math.abs(valor),tipo:'saida',cat:null});
+    }
+  }
+  return trans.slice(0,300);
+}
+
+const botoesEntrada=[
+  {k:'salario', tipo:'entrada', label:'💼 Meu salário'},
+  {k:'esposo',  tipo:'entrada', label:'👨 Depósito esposo'},
+  {k:'reembolso',tipo:'entrada',label:'🔄 Reembolso fábrica'},
+  {k:'outro',   tipo:'entrada', label:'➕ Outra entrada'},
+];
+const botoesSaida=[
+  {k:'escola',     tipo:'saida',label:'🏫 Escola'},
+  {k:'conta',      tipo:'saida',label:'💡 Água / luz'},
+  {k:'alimentacao',tipo:'saida',label:'🛒 Alimentação'},
+  {k:'saude',      tipo:'saida',label:'💊 Saúde'},
+  {k:'fabrica',    tipo:'saida',label:'🏭 Fábrica no cartão'},
+  {k:'esposo',     tipo:'saida',label:'👨 Resp. esposo'},
+  {k:'pessoal',    tipo:'saida',label:'🏠 Pessoal / família'},
+  {k:'ignorar',    tipo:null,   label:'🚫 Ignorar'},
+];
+
+function iniciarRevisao(trans){
+  revisao=trans.map(t=>({...t,cat:null}));
+  document.getElementById('revisao-container').style.display='block';
+  renderRevisao();
+}
+
+function cancelarRevisao(){
+  revisao=[];
+  document.getElementById('revisao-container').style.display='none';
+}
+
+function catTransacao(id,tipo,cat){
+  const t=revisao.find(t=>t.id===id);
+  if(t){t.tipo=tipo;t.cat=cat;}
+  renderRevisao();
+}
+
+function renderRevisao(){
+  const feitas=revisao.filter(t=>t.cat!==null).length;
+  const total=revisao.length;
+  document.getElementById('rev-feitas').textContent=feitas;
+  document.getElementById('rev-total').textContent=total;
+  document.getElementById('rev-bar').style.width=(total?Math.round(feitas/total*100):0)+'%';
+  const btn=document.getElementById('btn-finalizar');
+  btn.disabled=feitas===0;
+  btn.textContent=feitas>0?`✓ Importar ${feitas} lançamento${feitas>1?'s':''} categorizados`:'✓ Importar lançamentos categorizados';
+
+  document.getElementById('rev-lista').innerHTML=revisao.map(t=>{
+    const feita=t.cat!==null;
+    const valClass=t.tipo==='entrada'?'positivo':'negativo';
+    const sinal=t.tipo==='entrada'?'+':'−';
+    const todosBtns=[...botoesEntrada,...botoesSaida];
+    const btnHTML=todosBtns.map(b=>{
+      const ativo=(t.cat===b.k&&t.tipo===b.tipo)||(b.k==='ignorar'&&t.cat==='ignorar');
+      const sufixo=b.k==='esposo'?(b.tipo==='entrada'?'-e':'-s'):'';
+      const cls=ativo?`ativo-${b.k}${sufixo}`:'';
+      const tipo=b.tipo||'saida';
+      return`<button class="cat-btn ${cls}" onclick="catTransacao(${t.id},'${tipo}','${b.k}')">${b.label}</button>`;
+    }).join('');
+    return`<div class="transacao-card ${feita?'feita':''}">
+      <div class="transacao-top">
+        <div><div class="transacao-desc">${esc(t.desc)}</div><div class="transacao-meta">${fmtD(t.data)}</div></div>
+        <div class="transacao-valor ${valClass}">${sinal} ${fmt(t.valor)}</div>
+      </div>
+      <div class="cat-btns">${btnHTML}</div>
+    </div>`;
+  }).join('');
+}
+
+function finalizarRevisao(){
+  const ok=revisao.filter(t=>t.cat!==null&&t.cat!=='ignorar');
+  if(!ok.length){alert('Categorize pelo menos uma transação.');return}
+  items=[...items,...ok.map(t=>({id:Date.now()+Math.random(),tipo:t.tipo,data:t.data,valor:t.valor,desc:t.desc,extra:t.cat}))];
+  salvar();
+  cancelarRevisao();
+  alert(`✓ ${ok.length} lançamento${ok.length>1?'s':''} importado${ok.length>1?'s':''}!\n\nVeja o resultado em "Resumo" ou "Análise salarial".`);
+  render();
+}
+
+function addManual(tipo){
+  const p=tipo==='entrada'?'e':'s';
+  const data=document.getElementById(p+'-data').value;
+  const valor=parseFloat(document.getElementById(p+'-valor').value);
+  const desc=document.getElementById(p+'-desc').value.trim();
+  const extra=tipo==='entrada'?document.getElementById('e-origem').value:document.getElementById('s-cat').value;
+  if(!data||!valor||valor<=0||!desc){alert('Preencha data, valor e descrição.');return}
+  items.push({id:Date.now(),tipo,data,valor,desc,extra});
+  salvar();
+  document.getElementById(p+'-valor').value='';
+  document.getElementById(p+'-desc').value='';
+  render();
+}
+
+function delItem(id){
+  if(!confirm('Excluir este lançamento?'))return;
+  items=items.filter(i=>i.id!==id);
+  salvar();render();
+}
+
+function setFiltro(f,btn){
+  filtroAtivo=f;
+  document.querySelectorAll('.filt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');render();
+}
+
+const origemLabel={salario:'Salário / pró-labore',esposo:'Depósito do esposo',reembolso:'Reembolso fábrica',bonus:'Bônus / comissão',outro:'Outros'};
+const catLabel={escola:'Escola / mensalidade',conta:'Água / luz / condomínio',alimentacao:'Alimentação / mercado',saude:'Saúde / farmácia',fabrica:'Fábrica no meu cartão',esposo:'A pagar pelo esposo',pessoal:'Outros pessoal'};
+
+function render(){
+  const ent=items.filter(i=>i.tipo==='entrada');
+  const sai=items.filter(i=>i.tipo==='saida');
+  const pend=items.filter(i=>!i.extra);
+  const totE=ent.reduce((a,i)=>a+i.valor,0);
+  const totS=sai.reduce((a,i)=>a+i.valor,0);
+  const totSal=ent.filter(i=>i.extra==='salario').reduce((a,i)=>a+i.valor,0);
+  const totEsp=ent.filter(i=>i.extra==='esposo').reduce((a,i)=>a+i.valor,0);
+  const fabItems=sai.filter(i=>i.extra==='fabrica');
+  const totFab=fabItems.reduce((a,i)=>a+i.valor,0);
+  const saldo=totE-totS;
+  const salReal=totSal-totFab;
+
+  document.getElementById('r-entradas').textContent=fmt(totE);
+  document.getElementById('r-saidas').textContent=fmt(totS);
+  document.getElementById('r-salario').textContent=fmt(Math.max(0,salReal));
+  const sEl=document.getElementById('r-saldo');
+  sEl.textContent=fmt(saldo);
+  sEl.closest('.card').className='card '+(saldo>=0?'green':'red');
+
+  const alP=document.getElementById('al-pend');
+  if(pend.length){alP.style.display='block';document.getElementById('al-pend-txt').textContent=` ${pend.length} lançamento(s) importados ainda sem categoria. Vá em "Lançamento manual" → filtro "Pendentes".\`}else alP.style.display='none';
+
+  const alF=document.getElementById('al-fab');
+  if(totFab>0){alF.style.display='block';document.getElementById('al-fab-txt').textContent=` ${fmt(totFab)} de despesas da fábrica estão no seu cartão, reduzindo seu salário real.`;}else alF.style.display='none';
+
+  const cp=sai.filter(i=>i.extra==='escola'||i.extra==='conta');
+  const totCP=cp.reduce((a,i)=>a+i.valor,0);
+  const alC=document.getElementById('al-contas');
+  if(totCP>0){alC.style.display='block';document.getElementById('al-contas-txt').textContent=` Escola, água e luz somam ${fmt(totCP)} no período.`;}else alC.style.display='none';
+
+  renderBreakdown('bd-entradas',ent,Object.keys(origemLabel),origemLabel,totE,{salario:'#1A7A58',esposo:'#5A3A8A',reembolso:'#185FA5',bonus:'#8A5C0A',outro:'#6B6860'});
+  renderBreakdown('bd-saidas',sai,Object.keys(catLabel),catLabel,totS,{escola:'#8A5C0A',conta:'#8A5C0A',alimentacao:'#185FA5',saude:'#185FA5',fabrica:'#B83232',esposo:'#5A3A8A',pessoal:'#6B6860'});
+
+  let vis=items;
+  if(filtroAtivo==='entrada')vis=ent;
+  else if(filtroAtivo==='saida')vis=sai.filter(i=>i.extra!=='fabrica'&&i.extra!=='esposo');
+  else if(filtroAtivo==='fabrica')vis=sai.filter(i=>i.extra==='fabrica');
+  else if(filtroAtivo==='esposo')vis=[...ent.filter(i=>i.extra==='esposo'),...sai.filter(i=>i.extra==='esposo')];
+  else if(filtroAtivo==='pendente')vis=pend;
+
+  const sorted=[...vis].sort((a,b)=>b.data.localeCompare(a.data));
+  const tb=document.getElementById('tb-items');
+  if(!sorted.length){tb.innerHTML='<tr><td colspan="5" class="empty">Nenhum lançamento nesta categoria</td></tr>';}
+  else{
+    tb.innerHTML=sorted.map(i=>{
+      let tc='saida',tt=catLabel[i.extra]||i.extra||'—';
+      if(!i.extra){tc='pendente';tt='pendente';}
+      else if(i.tipo==='entrada'){tc=i.extra==='esposo'?'esposo':'entrada';tt=origemLabel[i.extra]||i.extra;}
+      else if(i.extra==='fabrica')tc='fabrica';
+      const cor=i.tipo==='entrada'?'#1A7A58':'#B83232';
+      const sinal=i.tipo==='entrada'?'+':'−';
+      return`<tr>
+        <td style="white-space:nowrap">${fmtD(i.data)}</td>
+        <td>${esc(i.desc)}</td>
+        <td><span class="tag ${tc}">${tt}</span></td>
+        <td style="text-align:right;font-family:'DM Mono',monospace;color:${cor};font-weight:500;white-space:nowrap">${sinal} ${fmt(i.valor)}</td>
+        <td><button class="del-btn" onclick="delItem(${i.id})">×</button></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // análise
+  document.getElementById('a-sal').textContent=fmt(totSal);
+  document.getElementById('a-fab').textContent=fmt(totFab);
+  const liqEl=document.getElementById('a-liq');
+  liqEl.textContent=fmt(Math.max(0,salReal));
+  liqEl.closest('.card').className='card '+(salReal>=0?'blue':'red');
+  document.getElementById('al-sal').textContent='+ '+fmt(totSal);
+  document.getElementById('al-esp').textContent='+ '+fmt(totEsp);
+  document.getElementById('al-fab2').textContent='− '+fmt(totFab);
+  const totalReal=totSal+totEsp-totFab;
+  const alTot=document.getElementById('al-tot');
+  alTot.textContent=fmt(totalReal);
+  alTot.className='mono '+(totalReal>=0?'positivo':'negativo');
+
+  renderLista('lista-cp',cp,'#8A5C0A','Nenhuma conta pessoal lançada');
+  renderLista('lista-esp',ent.filter(i=>i.extra==='esposo'),'#5A3A8A','Nenhum depósito do esposo');
+  renderLista('lista-fab',fabItems,'#B83232','Nenhuma despesa da fábrica');
+
+  const st=document.getElementById('stats');
+  if(st)st.innerHTML=`
+    <div class="breakdown-item"><span class="breakdown-label">Total de lançamentos</span><span class="breakdown-val">${items.length}</span></div>
+    <div class="breakdown-item"><span class="breakdown-label">Entradas</span><span class="breakdown-val">${ent.length}</span></div>
+    <div class="breakdown-item"><span class="breakdown-label">Saídas</span><span class="breakdown-val">${sai.length}</span></div>
+    <div class="breakdown-item"><span class="breakdown-label">Pendentes de categoria</span><span class="breakdown-val">${pend.length}</span></div>
+    <div class="breakdown-item"><span class="breakdown-label">Período</span><span class="breakdown-val">${periodoStr()}</span></div>`;
+}
+
+function renderBreakdown(id,lista,chaves,labels,total,cores){
+  const el=document.getElementById(id);
+  if(!lista.length){el.innerHTML='<div class="empty">Sem dados ainda</div>';return}
+  const rows=chaves.map(k=>{
+    const t=lista.filter(i=>i.extra===k).reduce((a,i)=>a+i.valor,0);
+    if(!t)return'';
+    const pct=total?Math.round(t/total*100):0;
+    return`<div class="breakdown-item"><span class="breakdown-label">${labels[k]}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${cores[k]||'#888'}"></div></div><span class="breakdown-val">${fmt(t)}</span></div>`;
+  }).filter(Boolean).join('');
+  el.innerHTML=rows||'<div class="empty">—</div>';
+}
+
+function renderLista(id,lista,cor,empty){
+  const el=document.getElementById(id);
+  if(!lista.length){el.innerHTML=`<div class="empty">${empty}</div>`;return}
+  const sorted=[...lista].sort((a,b)=>b.data.localeCompare(a.data));
+  const total=lista.reduce((a,i)=>a+i.valor,0);
+  el.innerHTML=sorted.map(i=>`<div class="breakdown-item"><span class="breakdown-label">${fmtD(i.data)} — ${esc(i.desc)}</span><span class="breakdown-val" style="color:${cor}">${fmt(i.valor)}</span></div>`).join('')
+    +`<div class="breakdown-item" style="font-weight:600"><span class="breakdown-label">Total</span><span class="breakdown-val mono" style="color:${cor}">${fmt(total)}</span></div>`;
+}
+
+function periodoStr(){
+  if(!items.length)return'—';
+  const ds=items.map(i=>i.data).sort();
+  return fmtD(ds[0])+' a '+fmtD(ds[ds.length-1]);
+}
+
+function exportarJSON(){
+  const b=new Blob([JSON.stringify(items,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='financeiro-backup-'+hoje+'.json';a.click();
+}
+
+function exportarCSV(){
+  const h=['Data','Tipo','Descricao','Categoria/Origem','Valor'].join(';');
+  const linhas=[...items].sort((a,b)=>b.data.localeCompare(a.data)).map(i=>{
+    const cat=i.tipo==='entrada'?(origemLabel[i.extra]||i.extra):(catLabel[i.extra]||i.extra);
+    return[i.data,i.tipo==='entrada'?'Entrada':'Saida','"'+i.desc+'"','"'+(cat||'')+'"',i.valor.toFixed(2).replace('.',',')].join(';');
+  });
+  const csv=[h,...linhas].join('\n');
+  const b=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='financeiro-'+hoje+'.csv';a.click();
+}
+
+function importarJSON(input){
+  const f=input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(!Array.isArray(d))throw new Error();
+      if(!confirm(`Importar ${d.length} lançamentos? Isso VAI substituir os dados atuais.`))return;
+      items=d;salvar();render();alert('Importação concluída!');
+    }catch{alert('Arquivo inválido.');}
+  };
+  r.readAsText(f);input.value='';
+}
+
+function limparTudo(){
+  if(!confirm('Apagar TODOS os lançamentos?'))return;
+  if(!confirm('Confirmar?'))return;
+  items=[];salvar();render();
+}
+
+render();
+</script>
+</body>
+</html>
