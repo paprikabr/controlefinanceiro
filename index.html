@@ -299,7 +299,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-<!-- Firebase + Firestore (expõe funções globais para o script abaixo) -->
+<!-- Firebase + Auth anônimo + Firestore (salva por usuário) -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
   import {
@@ -309,6 +309,11 @@
     setDoc,
     serverTimestamp
   } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
+  import {
+    getAuth,
+    signInAnonymously,
+    onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCZYczI_-RPAjXrUSGzfZqI_hvifHn7tVk",
@@ -321,45 +326,56 @@
 
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
+  const auth = getAuth(app);
 
-  // Ajuste aqui se quiser mudar onde salva no Firestore:
-  const DOC_REF = doc(db, "controlefinanceiro", "fin_v2");
+  let userUid = null;
+  let docRef = null;
+
+  function makeDebouncedSaver() {
+    let t = null;
+    return (items) => {
+      if (!docRef) return;
+      clearTimeout(t);
+      t = setTimeout(async () => {
+        await setDoc(docRef, { items, updatedAt: serverTimestamp() }, { merge: true });
+      }, 400);
+    };
+  }
+
+  const debouncedSave = makeDebouncedSaver();
 
   window.firebaseLoadItems = async () => {
-    const snap = await getDoc(DOC_REF);
+    if (!docRef) return [];
+    const snap = await getDoc(docRef);
     if (!snap.exists()) return [];
     const data = snap.data();
     return Array.isArray(data.items) ? data.items : [];
-    };
+  };
 
-  // debounce para não gravar a cada clique/tecla
-  window.firebaseSaveItems = (() => {
-    let t = null;
-    return (items) => {
-      clearTimeout(t);
-      t = setTimeout(async () => {
-        await setDoc(
-          DOC_REF,
-          { items, updatedAt: serverTimestamp() },
-          { merge: true }
-        );
-      }, 400);
-    };
-  })();
+  window.firebaseSaveItems = (items) => debouncedSave(items);
 
-  window.dispatchEvent(new Event("firebase-ready"));
+  onAuthStateChanged(auth, (user) => {
+    if (!user) return;
+    userUid = user.uid;
+    docRef = doc(db, "users", userUid, "fin", "fin_v2");
+    window.dispatchEvent(new Event("firebase-ready"));
+  });
+
+  // garante que sempre vai logar sem pedir nada
+  signInAnonymously(auth).catch((e) => {
+    console.error(e);
+    alert("Falha ao autenticar (anônimo). Verifique se o login anônimo está ativado no Firebase Auth.");
+  });
 </script>
 
 <script>
 if(typeof pdfjsLib!=='undefined')pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-let items=[]; // agora vem do Firebase
+let items=[];
 let filtroAtivo='todos';
 let revisao=[];
 
-function salvar(){
-  if(window.firebaseSaveItems) window.firebaseSaveItems(items);
-}
+function salvar(){ if(window.firebaseSaveItems) window.firebaseSaveItems(items); }
 
 async function carregarDoFirebase(){
   try{
@@ -368,13 +384,11 @@ async function carregarDoFirebase(){
     render();
   }catch(e){
     console.error(e);
-    alert('Não foi possível carregar seus dados do Firebase (Firestore). Verifique regras/permissões e conexão.');
+    alert('Não foi possível carregar seus dados do Firebase (Firestore). Verifique conexão e regras.');
   }
 }
 
 window.addEventListener('firebase-ready',carregarDoFirebase);
-// fallback caso o evento já tenha disparado
-setTimeout(carregarDoFirebase,0);
 
 function fmt(v){return'R$ '+Math.abs(parseFloat(v)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
@@ -443,7 +457,6 @@ function extrairItau(texto){
   const linhas=texto.split(/\n|\r/).map(l=>l.trim()).filter(Boolean);
   const ignorar=['saldo','total','data','lançamento','histórico','valor','página','extrato','agência','conta','cliente','periodo','período','itaú'];
 
-  // padrão principal: DD/MM ou DD/MM/AA ou DD/MM/AAAA + desc + valor
   const re=/(\d{2})\/(\d{2})(?:\/(\d{2,4}))?\s+(.+?)\s+([-−]?\d{1,3}(?:\.\d{3})*,\d{2})/;
 
   linhas.forEach(linha=>{
@@ -462,13 +475,11 @@ function extrairItau(texto){
     const valor=parseFloat(valorStr);
     if(isNaN(valor)||valor===0)return;
 
-    // evitar duplicatas dentro da mesma leitura
     if(trans.find(t=>t.data===dataISO&&t.desc===desc&&Math.abs(t.valor)===Math.abs(valor)))return;
 
     trans.push({id:Date.now()+Math.random(),data:dataISO,desc,valor:Math.abs(valor),tipo:valor>0?'entrada':'saida',cat:null});
   });
 
-  // fallback mais simples se não encontrou nada
   if(!trans.length){
     const re2=/(\d{2})\/(\d{2})\s+(.{4,50}?)\s+(\d[\d.]*,\d{2})/g;
     let m;
@@ -672,7 +683,7 @@ function render(){
 
   renderLista('lista-cp',cp,'#8A5C0A','Nenhuma conta pessoal lançada');
   renderLista('lista-esp',ent.filter(i=>i.extra==='esposo'),'#5A3A8A','Nenhum depósito do esposo');
-  renderLista('lista-fab',fabItems,'#B83232','Nenhuma despesa da fábrica');
+  renderLista('lista-fab',fabItems,'#B83232','Nenhuma despesa da fábrica registrada');
 
   const st=document.getElementById('stats');
   if(st)st.innerHTML=`
@@ -746,7 +757,6 @@ function limparTudo(){
   items=[];salvar();render();
 }
 
-// primeira render (vazia) antes do Firestore terminar de carregar
 render();
 </script>
 </body>
